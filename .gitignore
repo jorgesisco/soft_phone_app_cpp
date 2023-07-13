@@ -2,3 +2,6 @@
 main
 Info.plist
 settings.json
+main.o
+src/MyAccount.o
+src/MyCall.o
