@@ -1,11 +1,3 @@
-// #include <pjsua2.hpp>
-// #include <iostream>
-// #include <cstdlib>  // for getenv
-// #include <thread>
-// #include <chrono>
-// #include <pjsua-lib/pjsua.h>
-
-
 #include "MyCall.h"
 #include "MyAccount.h"
 #include <iostream>
