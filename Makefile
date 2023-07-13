@@ -16,3 +16,10 @@ $(EXECUTABLE): $(OBJECTS)
 clean:
 	find . -name "*.o" -type f -delete
 	rm -f $(EXECUTABLE)
+
+
+bu:
+	docker-compose up --build
+
+down:
+	docker-compose down

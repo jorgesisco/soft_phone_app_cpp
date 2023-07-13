@@ -1,0 +1,10 @@
+version: "3"
+services:
+  myapp:
+    build: .
+    environment:
+      - USERNAME_SIP=${USERNAME_SIP}
+      - PASSWORD=${PASSWORD}
+      - SERVER=${SERVER}
+    ports:
+      - "80:80"
