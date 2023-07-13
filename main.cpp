@@ -3,23 +3,66 @@
 #include <cstdlib>  // for getenv
 #include <thread>
 #include <chrono>
+#include <pjsua-lib/pjsua.h>
 
 using namespace pj;
 
-class MyCall : public Call {
+class MyCall : public pj::Call
+{
 public:
-    MyCall(Account &acc, int call_id = PJSUA_INVALID_ID) 
-        : Call(acc, call_id)
-    { }
+    MyCall(pj::Account &acc, int call_id, pj::Endpoint &ep) 
+        : Call(acc, call_id), account(acc), ep(ep), recorder(nullptr), player(nullptr) {}
 
-    virtual void onCallState(OnCallStateParam &prm) {
-        CallInfo ci = getInfo();
-        std::cout << "*** Call: " << ci.remoteUri << ", State: " << ci.stateText << std::endl;
+    virtual void onCallState(pj::OnCallStateParam &prm)
+    {
+        pj::CallInfo ci = getInfo();
+
+        if (ci.state == PJSIP_INV_STATE_DISCONNECTED)
+        {
+            if (recorder)
+            {
+                recorder = nullptr;
+
+                // Remove this call from the account's list of calls
+                // This will need to be handled in your account management system
+                // account.calls.remove(this); 
+            }
+        }
     }
+
+    virtual void onCallMediaState(pj::OnCallMediaStateParam &prm)
+    {
+        pj::CallInfo ci = getInfo();
+
+        for (auto &mi : ci.media)
+        {
+            if (mi.type == PJMEDIA_TYPE_AUDIO && mi.status == PJSUA_CALL_MEDIA_ACTIVE)
+            {
+                pj::AudioMedia audioMedia = getAudioMedia(mi.index);
+                
+
+                // Create a reference to playback device media
+                const pj::AudioMedia& playbackMedia = pj::Endpoint::instance().audDevManager().getPlaybackDevMedia();
+
+                // Transmit the call's audio media to the capture device (for you to hear the caller)
+                audioMedia.startTransmit(playbackMedia);
+
+                // Transmit from the local machine's microphone to the call's audio media
+                pj::Endpoint::instance().audDevManager().getCaptureDevMedia().startTransmit(audioMedia);
+            }
+        }
+    };
+private:
+    pj::Account &account;
+    pj::Endpoint &ep;
+    pj::AudioMediaRecorder *recorder;
+    pj::AudioMediaPlayer *player;
 };
 
 class MyAccount : public Account {
 public:
+    MyAccount(Endpoint &ep) : ep(ep) {}
+
     virtual void onRegState(OnRegStateParam &prm) {
         AccountInfo ai = getInfo();
         std::cout << (ai.regIsActive? "*** Register:" : "*** Unregister:")
@@ -28,7 +71,7 @@ public:
 
     virtual void onIncomingCall(OnIncomingCallParam &iprm) {
         std::cout << "*** Incoming Call: " << iprm.callId << std::endl;
-        MyCall *call = new MyCall(*this, iprm.callId);
+        MyCall *call = new MyCall(*this, iprm.callId, ep);
         CallOpParam prm;
         
         // Ring for 3 seconds before answering
@@ -38,6 +81,9 @@ public:
         prm.statusCode = (pjsip_status_code)200;
         call->answer(prm);
     }
+
+private:
+    Endpoint &ep;
 };
 
 int main() {
@@ -74,7 +120,7 @@ int main() {
     AuthCredInfo cred("digest", "*", username_sip, 0, password);
     acfg.sipConfig.authCreds.push_back(cred);
 
-    MyAccount *acc = new MyAccount;
+    MyAccount *acc = new MyAccount(ep);
     acc->create(acfg);
 
     // Handle events
