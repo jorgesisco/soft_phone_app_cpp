@@ -1,22 +1,18 @@
-# the compiler: gcc for C program, define as g++ for C++
-CC = g++
+CC=g++
+CFLAGS=-g -Wall -I/usr/local/include/pjsua2 -Iinclude
+LDFLAGS=-L/usr/local/lib -lpjsua2 -lpj
+SOURCES=main.cpp src/MyCall.cpp src/MyAccount.cpp
+OBJECTS=$(SOURCES:.cpp=.o)
+EXECUTABLE=main
 
-# compiler flags:
-#  -g    adds debugging information to the executable file
-#  -Wall turns on most, but not all, compiler warnings
-CFLAGS  = -g -Wall -I/usr/local/include/pjsua2
-LDFLAGS = -L/usr/local/lib -lpjsua2 -lpj
+all: $(SOURCES) $(EXECUTABLE)
+    
+$(EXECUTABLE): $(OBJECTS) 
+	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
 
-# the build target executable:
-TARGET = main
-
-all: $(TARGET)
-
-$(TARGET): $(TARGET).cpp
-	$(CC) $(CFLAGS) -o $(TARGET) $(TARGET).cpp
+.cpp.o:
+	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	$(RM) $(TARGET)
-
-build:
-	set -a && . ./.env && set +a && $(CC) $(CFLAGS) -o main main.cpp $(LDFLAGS)
+	find . -name "*.o" -type f -delete
+	rm -f $(EXECUTABLE)
