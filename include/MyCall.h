@@ -9,7 +9,7 @@ class MyCall : public pj::Call {
 public:
     MyCall(pj::Account &acc, int call_id, pj::Endpoint &ep);
     virtual void onCallState(pj::OnCallStateParam &prm);
-    virtual void onCallMediaState(pj::OnCallMediaStateParam &prm);
+    // virtual void onCallMediaState(pj::OnCallMediaStateParam &prm);
 
 private:
     pj::Account &account;
