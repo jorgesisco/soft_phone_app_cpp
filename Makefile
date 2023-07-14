@@ -23,3 +23,7 @@ bu:
 
 down:
 	docker-compose down
+
+
+env:
+	source load_env.sh
