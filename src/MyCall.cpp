@@ -14,18 +14,32 @@ void MyCall::onCallState(pj::OnCallStateParam &prm)
         {
             if (mi.type == PJMEDIA_TYPE_AUDIO && mi.status == PJSUA_CALL_MEDIA_ACTIVE)
             {
+        pj::CallInfo ci = getInfo();
+
+        for (auto &mi : ci.media)
+        {
+            if (mi.type == PJMEDIA_TYPE_AUDIO && mi.status == PJSUA_CALL_MEDIA_ACTIVE)
+            
+            {
                 pj::AudioMedia audioMedia = getAudioMedia(mi.index);
-                
 
-                // Create a reference to playback device media
-                const pj::AudioMedia& playbackMedia = pj::Endpoint::instance().audDevManager().getPlaybackDevMedia();
+                // Get the virtual speaker index (replace this with the correct index)
+                int virtual_speaker_index = 3;  // replace with the correct index for VB-Cable
 
-                // Transmit the call's audio media to the capture device (for you to hear the caller)
-                audioMedia.startTransmit(playbackMedia);
+                // Set the default playback device to the virtual speaker
+                pj::Endpoint::instance().audDevManager().setPlaybackDev(virtual_speaker_index);
 
-                // Transmit from the local machine's microphone to the call's audio media
-                pj::Endpoint::instance().audDevManager().getCaptureDevMedia().startTransmit(audioMedia);
+                // Create a reference to the virtual speaker media
+                const pj::AudioMedia& virtualSpeakerMedia = pj::Endpoint::instance().audDevManager().getPlaybackDevMedia();
+
+                // Transmit the call's audio media to the virtual speaker
+                audioMedia.startTransmit(virtualSpeakerMedia);
+
+                // Transmit from the virtual microphone to the call's audio media
+                virtualSpeakerMedia.startTransmit(audioMedia);
             }
+        }
+    }
         }
     }
 
